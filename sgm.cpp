@@ -263,11 +263,10 @@ namespace sgm
 
         //The final value is the the sum of the E terms - min E
         long single_path_cost = E_data + E_smooth - min;
+        
         path_cost_[cur_path][cur_y][cur_x][d] = single_path_cost;
       }
     }
-    
-    
     /////////////////////////////////////////////////////////////////////////////////////////
   }
 
@@ -288,14 +287,107 @@ namespace sgm
       int dir_y = paths_[cur_path].direction_y;
       
       int start_x, start_y, end_x, end_y, step_x, step_y;
-      
-//      for(int y = start_y; y != end_y ; y+=step_y)
-//      {
-//        for(int x = start_x; x != end_x ; x+=step_x)
-//        {
-//          compute_path_cost(dir_y, dir_x, y, x, cur_path);
-//        }
-//      }
+
+      /*
+      All possible directions 
+      E: east
+      W: west
+      S: south
+      N: north
+      SE: southeast
+      SW: southwest
+      NE: northeast
+      NW: northwest
+      */
+
+      //Horizontal E-W
+      if(dir_x == -1)
+      {
+        start_x = width_ - 1;
+        end_x = 0;
+        step_x = -1;
+        
+        // in teoria le y non mi servono, sto andando solo su x
+
+      }
+      //Horizontal W-E
+      else if(dir_x == 1)
+      {
+        start_x = 0;
+        end_x = width_ - 1;
+        step_x = 1;
+
+        // in teoria le y non mi servono, sto andando solo su x
+        
+      }
+      //Vertical N-S
+      else if(dir_y == 1)
+      {
+        start_y = 0;
+        end_y = height_ - 1;
+        step_y = 1;
+
+        // in teoria le x non mi servono, sto andando solo su y
+      }
+      //Vertical S-N
+      else if(dir_y == -1)
+      {
+        start_y = height_ - 1;
+        end_y = 0;
+        step_y = -1;
+
+        // in teoria le x non mi servono, sto andando solo su y
+      }
+      //Diagonal NW-SE
+      else if(dir_x == 1 && dir_y == 1)
+      {
+        start_x = 0;
+        start_y = 0;
+        end_x = width_ - 1;
+        end_y = height_ - 1;
+        step_x = 1;
+        step_y = 1;
+      }
+      //Diagonal SE-NW
+      else if(dir_x == -1 && dir_y == -1)
+      {
+        start_x = width_ - 1;
+        start_y = height_ - 1;
+        end_x = 0;
+        end_y = 0;
+        step_x = -1;
+        step_y = -1;
+      }
+      //Diagonal NE-SW
+      else if(dir_x == 1 && dir_y == -1)
+      {
+        start_x = width_ -1;
+        start_y = 0;
+        end_x = 0;
+        end_y = height_ -1;
+        step_x = -1;
+        step_y = 1;
+      }
+      //Diagonal SW-NE
+      else if(dir_x == -1 && dir_y == 1)
+      {
+        start_x = 0;
+        start_y = height_ - 1;
+        end_x = width_ - 1;
+        end_y = 0;
+        step_x = 1;
+        step_y = -1;
+      }
+
+      //remove the comment code
+
+      for(int y = start_y; y != end_y ; y+=step_y)
+      {
+        for(int x = start_x; x != end_x ; x+=step_x)
+        {
+          compute_path_cost(dir_y, dir_x, y, x, cur_path);
+        }
+      }
       
       /////////////////////////////////////////////////////////////////////////////////////////
     }
