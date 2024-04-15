@@ -202,6 +202,7 @@ namespace sgm
     if(cur_y == pw_.north || cur_y == pw_.south || cur_x == pw_.east || cur_x == pw_.west)
     {
       //Please fill me!
+      // CHIEDERE AL PROF SAREBBE 1,1
 
       //Assign the E_data term taken from the cost volume (special case)
       for(int d = 0;d<disparity_range_;d++)
@@ -221,7 +222,7 @@ namespace sgm
         long E_data = cost_[cur_y][cur_x][d];
 
         long valueR,value1B,value2B,valueG,min; //min è in Green
-        std::vector<long>smooth_values;
+        vector<long>smooth_values;
 
         //Red formula
         valueR = path_cost_[cur_path][cur_y-1][cur_x-1][d];
@@ -246,7 +247,7 @@ namespace sgm
         }
         
         //Green formula
-        std::vector<long> temp_values;
+        vector<long> temp_values;
         for(int dt = 0; dt<disparity_range_;dt++)
         {
           temp_values.push_back(path_cost_[cur_path][cur_y-1][cur_x-1][dt]);
@@ -301,42 +302,58 @@ namespace sgm
       */
 
       //Horizontal E-W
-      if(dir_x == -1)
+      if(dir_x == -1 && dir_y == 0)
       {
         start_x = width_ - 1;
-        end_x = 0;
+        end_x = 0; 
         step_x = -1;
+
+        start_y = 0;
+        end_y = height_ - 1;
+        step_y = 1;
         
-        // in teoria le y non mi servono, sto andando solo su x
+        
 
       }
       //Horizontal W-E
-      else if(dir_x == 1)
+      else if(dir_x == 1 && dir_y == 0)
       {
         start_x = 0;
         end_x = width_ - 1;
         step_x = 1;
 
-        // in teoria le y non mi servono, sto andando solo su x
+        start_y = 0;
+        end_y = height_ - 1;
+        step_y = 1;
+
+        
         
       }
       //Vertical N-S
-      else if(dir_y == 1)
+      else if(dir_x == 0 && dir_y == 1)
       {
         start_y = 0;
         end_y = height_ - 1;
         step_y = 1;
 
-        // in teoria le x non mi servono, sto andando solo su y
+        start_x = 0;
+        end_x = width_ - 1;
+        step_x = 1;
+
+        
       }
       //Vertical S-N
-      else if(dir_y == -1)
+      else if(dir_x == 0 && dir_y == -1)
       {
         start_y = height_ - 1;
         end_y = 0;
         step_y = -1;
 
-        // in teoria le x non mi servono, sto andando solo su y
+        start_x = 0;
+        end_x = width_ -1;
+        step_x = 1;
+
+        
       }
       //Diagonal NW-SE
       else if(dir_x == 1 && dir_y == 1)
@@ -424,6 +441,12 @@ namespace sgm
 
   void SGM::compute_disparity()
   {
+      //Vectors to contain the SGM disparity and the unscaled disparity
+      vector<double>disparity_SGM;
+      vector<double>disparity_mono;
+
+
+
       calculate_cost_hamming();
       aggregation();
       disp_ = Mat(Size(width_, height_), CV_8UC1, Scalar::all(0));
@@ -456,12 +479,8 @@ namespace sgm
                 // to estimate the unknown scale factor.    
                 /////////////////////////////////////////////////////////////////////////////////////////
 
-                
-                
-                
-                
-                
-                
+                disparity_SGM.push_back(smallest_disparity);
+                disparity_mono.push_back(mono_.at<uchar>(row,col));
                 /////////////////////////////////////////////////////////////////////////////////////////
               }
 
@@ -477,13 +496,32 @@ namespace sgm
       // disparities.
       /////////////////////////////////////////////////////////////////////////////////////////
 
+      double h;
+      double k;
+
+      //Ax = b with x = [h k]^T, A = [dmono 1], b = dsgm
+
+      int sizeMONO = disparity_mono.size();
+      int sizeSGM= disparity_SGM.size();
+
+      //Definition and inizialization of A and b
+      MatrixXd A(sizeMONO,2);
+      VectorXd b(sizeSGM);
+
+      for(int i=0;i<sizeMONO;++i){
+        A(i,0)=disparity_mono[i];}
       
+      A.col(1).setOnes();
+
+      for(int i=0;i<sizeSGM;++i){
+        b(i)=disparity_SGM[i];}
       
+      //Computation of the vector x
+      Vector2d x = ((A.transpose() * A).inverse()) * A.transpose() * b;
       
-      
-      
-      
-      
+      //Extraction of h and k
+      h = x(0);
+      k = x(1);
       /////////////////////////////////////////////////////////////////////////////////////////
 
   }
