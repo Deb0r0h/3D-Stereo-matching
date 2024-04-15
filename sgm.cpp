@@ -219,10 +219,10 @@ namespace sgm
       for(int d = 0;d<disparity_range_;d++)
       {
         //E_data
-        long E_data = cost_[cur_y][cur_x][d];
+        unsigned long E_data = cost_[cur_y][cur_x][d];
 
-        long valueR,value1B,value2B,valueG,min; //min è in Green
-        vector<long>smooth_values;
+        unsigned long valueR,value1B,value2B,valueG,min; //min è in Green
+        vector<unsigned long>smooth_values;
 
         //Red formula
         valueR = path_cost_[cur_path][cur_y-1][cur_x-1][d];
@@ -231,12 +231,12 @@ namespace sgm
         //Blu formula
         if (d == 0)
         {
-          value1B = path_cost_[cur_path][cur_y-1][cur_x-1][d+1];
+          value1B = path_cost_[cur_path][cur_y-1][cur_x-1][d+1] + small_penalty_cost;
           smooth_values.push_back(value1B);
         
         }else if (d == disparity_range_-1)
         {
-          value1B = path_cost_[cur_path][cur_y-1][cur_x-1][d-1];
+          value1B = path_cost_[cur_path][cur_y-1][cur_x-1][d-1] + small_penalty_cost;
           smooth_values.push_back(value1B);
         }
         else{
@@ -247,23 +247,23 @@ namespace sgm
         }
         
         //Green formula
-        vector<long> temp_values;
+        vector<unsigned long> temp_values;
         for(int dt = 0; dt<disparity_range_;dt++)
         {
           temp_values.push_back(path_cost_[cur_path][cur_y-1][cur_x-1][dt]);
           auto minimum = std::min_element(temp_values.begin(),temp_values.end());
-          min = *minimum;
-          valueG = min + big_penalty_cost;
+          best_prev_cost = *minimum;
+          valueG = best_prev_cost + big_penalty_cost;
           smooth_values.push_back(valueG);
         }
 
         //E_smooth
-        auto minimum_final = std::min_element(smooth_values.begin(),smooth_values.end());
-        long E_smooth = *minimum_final;
+        auto minimum_smooth = std::min_element(smooth_values.begin(),smooth_values.end());
+        unsigned long E_smooth = *minimum_smooth;
 
 
         //The final value is the the sum of the E terms - min E
-        long single_path_cost = E_data + E_smooth - min;
+        unsigned long single_path_cost = E_data + E_smooth - best_prev_cost;
         
         path_cost_[cur_path][cur_y][cur_x][d] = single_path_cost;
       }
@@ -508,13 +508,17 @@ namespace sgm
       MatrixXd A(sizeMONO,2);
       VectorXd b(sizeSGM);
 
-      for(int i=0;i<sizeMONO;++i){
-        A(i,0)=disparity_mono[i];}
+      for(int i=0;i<sizeMONO;++i)
+      {
+        A(i,0)=disparity_mono[i];
+      }
       
       A.col(1).setOnes();
 
-      for(int i=0;i<sizeSGM;++i){
-        b(i)=disparity_SGM[i];}
+      for(int i=0;i<sizeSGM;++i)
+      {
+        b(i)=disparity_SGM[i];
+      }
       
       //Computation of the vector x
       Vector2d x = ((A.transpose() * A).inverse()) * A.transpose() * b;
@@ -522,8 +526,27 @@ namespace sgm
       //Extraction of h and k
       h = x(0);
       k = x(1);
-      /////////////////////////////////////////////////////////////////////////////////////////
 
+      //Scale the initial guess disparity
+      for(int i=0;i<sizeSGM;++i)
+      {
+        disparity_SGM[i] = h * disparity_mono[i] + k;
+      }
+
+      //Improving/replacing the low confidence SGM disparities
+      //Most of the code is equal to the first part of this function
+      for(int row=0;row<height_;++row)
+      {
+        for(int col=0;col<width_;++col)
+        {
+          if(inv_confidence_[row][col] > 0 && inv_confidence_[row][col] < conf_thresh_)
+          {
+            int i = (row * width_) + col;
+            disp_.at<uchar>(row, col) = disparity_SGM[i]*255.0/disparity_range_;
+          }
+        }
+      }
+      /////////////////////////////////////////////////////////////////////////////////////////
   }
 
   float SGM::compute_mse(const cv::Mat &gt)
