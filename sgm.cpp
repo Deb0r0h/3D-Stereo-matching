@@ -179,7 +179,9 @@ namespace sgm
   {
     unsigned long prev_cost, best_prev_cost, no_penalty_cost, penalty_cost, 
                   small_penalty_cost, big_penalty_cost;
-
+    
+    //cout<<"compute path cost"<<endl;
+    
     //////////////////////////// Code to be completed (1/4) /////////////////////////////////
     // Complete the compute_path_cost() function that, given: 
     // i) a single pixel p defined by its coordinates cur_x and cur_y; 
@@ -221,7 +223,7 @@ namespace sgm
         //E_data
         unsigned long E_data = cost_[cur_y][cur_x][d];
 
-        unsigned long valueR,value1B,value2B,valueG,min; //min è in Green
+        unsigned long valueR,value1B,value2B,valueG;
         vector<unsigned long>smooth_values;
 
         //Red formula
@@ -251,11 +253,12 @@ namespace sgm
         for(int dt = 0; dt<disparity_range_;dt++)
         {
           temp_values.push_back(path_cost_[cur_path][cur_y-1][cur_x-1][dt]);
+        }
           auto minimum = std::min_element(temp_values.begin(),temp_values.end());
           best_prev_cost = *minimum;
           valueG = best_prev_cost + big_penalty_cost;
           smooth_values.push_back(valueG);
-        }
+        
 
         //E_smooth
         auto minimum_smooth = std::min_element(smooth_values.begin(),smooth_values.end());
@@ -274,7 +277,7 @@ namespace sgm
   
   void SGM::aggregation()
   {
-    
+    cout<<"Aggregation"<<endl;
     //for all defined paths
     for(int cur_path = 0; cur_path < PATHS_PER_SCAN; ++cur_path)
     {
@@ -441,6 +444,7 @@ namespace sgm
 
   void SGM::compute_disparity()
   {
+  
       //Vectors to contain the SGM disparity and the unscaled disparity
       vector<double>disparity_SGM;
       vector<double>disparity_mono;
