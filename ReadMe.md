@@ -25,6 +25,7 @@ SGM-Census with mono-depth initial guess
 
     ./sgm ../Examples/Rocks1/right.png ../Examples/Rocks1/left.png ../Examples/Rocks1/right_mono.png ../Examples/Rocks1/rightGT.png output_disparityR.png 85
 
+
 ---
 
 

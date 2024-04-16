@@ -159,7 +159,6 @@ namespace sgm
                 census_right= *p_right;
 
               }
-
               else
               {
                 census_right= out_val;
