@@ -462,7 +462,7 @@ namespace sgm
       k = x(1);
      
       //Improving/replacing the low confidence SGM disparities
-      //Most of the code is equal to the first part of this function
+      //Most of the code logic is taken from the first part of this function
       for(int row=0;row<height_;++row)
       {
         for(int col=0;col<width_;++col)
