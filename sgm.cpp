@@ -180,7 +180,7 @@ namespace sgm
     unsigned long prev_cost, best_prev_cost, no_penalty_cost, penalty_cost, 
                   small_penalty_cost, big_penalty_cost;
     
-    //cout<<"compute path cost"<<endl;
+    //cout<<"\ncompute path cost"<<endl;
     
     //////////////////////////// Code to be completed (1/4) /////////////////////////////////
     // Complete the compute_path_cost() function that, given: 
@@ -204,7 +204,6 @@ namespace sgm
     if(cur_y == pw_.north || cur_y == pw_.south || cur_x == pw_.east || cur_x == pw_.west)
     {
       //Please fill me!
-      // CHIEDERE AL PROF SAREBBE 1,1
 
       //Assign the E_data term taken from the cost volume (special case)
       for(int d = 0;d<disparity_range_;d++)
@@ -217,6 +216,15 @@ namespace sgm
     {
       //Please fill me!
 
+      vector<unsigned long> temp_values;
+      for(int d = 0; d<disparity_range_;d++)
+      {
+          temp_values.push_back(path_cost_[cur_path][cur_y-direction_y][cur_x-direction_x][d]);
+      }
+        auto minimum = std::min_element(temp_values.begin(),temp_values.end());
+        best_prev_cost = *minimum;
+        temp_values.clear();
+
       // Assign the E_data term taken from the cost volume plus the E_smooth term
       for(int d = 0;d<disparity_range_;d++)
       {
@@ -227,35 +235,36 @@ namespace sgm
         vector<unsigned long>smooth_values;
 
         //Red formula
-        valueR = path_cost_[cur_path][cur_y-1][cur_x-1][d];
+        valueR = path_cost_[cur_path][cur_y-direction_y][cur_x-direction_x][d];
         smooth_values.push_back(valueR);
 
         //Blu formula
         if (d == 0)
         {
-          value1B = path_cost_[cur_path][cur_y-1][cur_x-1][d+1] + small_penalty_cost;
+          value1B = path_cost_[cur_path][cur_y-direction_y][cur_x-direction_x][d+1] + small_penalty_cost;
           smooth_values.push_back(value1B);
         
         }else if (d == disparity_range_-1)
         {
-          value1B = path_cost_[cur_path][cur_y-1][cur_x-1][d-1] + small_penalty_cost;
+          value1B = path_cost_[cur_path][cur_y-direction_y][cur_x-direction_x][d-1] + small_penalty_cost;
           smooth_values.push_back(value1B);
         }
         else{
-          value1B = path_cost_[cur_path][cur_y-1][cur_x-1][d-1] + small_penalty_cost;
-          value2B = path_cost_[cur_path][cur_y-1][cur_x-1][d+1] + small_penalty_cost;
+          value1B = path_cost_[cur_path][cur_y-direction_y][cur_x-direction_x][d-1] + small_penalty_cost;
+          value2B = path_cost_[cur_path][cur_y-direction_y][cur_x-direction_x][d+1] + small_penalty_cost;
           smooth_values.push_back(value1B);
           smooth_values.push_back(value2B);
         }
         
         //Green formula
-        vector<unsigned long> temp_values;
+        //se lo metto fuori diventa più efficiente
+        /* vector<unsigned long> temp_values;
         for(int dt = 0; dt<disparity_range_;dt++)
         {
           temp_values.push_back(path_cost_[cur_path][cur_y-1][cur_x-1][dt]);
         }
           auto minimum = std::min_element(temp_values.begin(),temp_values.end());
-          best_prev_cost = *minimum;
+          best_prev_cost = *minimum; */
           valueG = best_prev_cost + big_penalty_cost;
           smooth_values.push_back(valueG);
         
@@ -269,6 +278,10 @@ namespace sgm
         unsigned long single_path_cost = E_data + E_smooth - best_prev_cost;
         
         path_cost_[cur_path][cur_y][cur_x][d] = single_path_cost;
+
+        //in teoria non serve visto che la definisco ad ogni ciclo
+        temp_values.clear();
+        smooth_values.clear();
       }
     }
     /////////////////////////////////////////////////////////////////////////////////////////
@@ -277,7 +290,8 @@ namespace sgm
   
   void SGM::aggregation()
   {
-    cout<<"Aggregation"<<endl;
+    //cout<<"\nAggregation"<<endl;
+
     //for all defined paths
     for(int cur_path = 0; cur_path < PATHS_PER_SCAN; ++cur_path)
     {
@@ -304,6 +318,37 @@ namespace sgm
       NW: northwest
       */
 
+//change the north etc
+
+     if(dir_x == -1)
+     {
+      start_x = pw_.east;
+      end_x = pw_.west;
+      step_x = -1;
+     }
+     else
+     {
+      start_x = pw_.west;
+      end_x = pw_.east;
+      step_x = 1;
+     }
+
+     if(dir_y == -1)
+     {
+      start_y = pw_.south;
+      end_y = pw_.north;
+      step_y = -1;
+     }
+     else
+     {
+      start_y = pw_.north;
+      end_y = pw_.south;
+      step_y = 1;
+     }
+
+
+
+/*
       //Horizontal E-W
       if(dir_x == -1 && dir_y == 0)
       {
@@ -314,10 +359,8 @@ namespace sgm
         start_y = 0;
         end_y = height_ - 1;
         step_y = 1;
-        
-        
-
       }
+
       //Horizontal W-E
       else if(dir_x == 1 && dir_y == 0)
       {
@@ -329,8 +372,6 @@ namespace sgm
         end_y = height_ - 1;
         step_y = 1;
 
-        
-        
       }
       //Vertical N-S
       else if(dir_x == 0 && dir_y == 1)
@@ -398,6 +439,7 @@ namespace sgm
         step_x = 1;
         step_y = -1;
       }
+      */
 
       //remove the comment code
 
@@ -444,11 +486,11 @@ namespace sgm
 
   void SGM::compute_disparity()
   {
-  
       //Vectors to contain the SGM disparity and the unscaled disparity
       vector<double>disparity_SGM;
       vector<double>disparity_mono;
 
+      cout<<"\nCompute disparity"<<endl;
 
 
       calculate_cost_hamming();
@@ -515,9 +557,10 @@ namespace sgm
       for(int i=0;i<sizeMONO;++i)
       {
         A(i,0)=disparity_mono[i];
+        A(i,1) =1;
       }
       
-      A.col(1).setOnes();
+      //A.col(1).setOnes();
 
       for(int i=0;i<sizeSGM;++i)
       {
@@ -526,16 +569,18 @@ namespace sgm
       
       //Computation of the vector x
       Vector2d x = ((A.transpose() * A).inverse()) * A.transpose() * b;
+     // Matrix<float,2,1> X(2,1);
       
       //Extraction of h and k
       h = x(0);
       k = x(1);
+     // X = ((A.transpose() * A).inverse()) * A.transpose() * b;
 
       //Scale the initial guess disparity
-      for(int i=0;i<sizeSGM;++i)
-      {
-        disparity_SGM[i] = h * disparity_mono[i] + k;
-      }
+      //for(int i=0;i<sizeSGM;++i)
+      //{
+       // disparity_SGM[i] = h * disparity_mono[i] + k;
+     // }
 
       //Improving/replacing the low confidence SGM disparities
       //Most of the code is equal to the first part of this function
@@ -543,10 +588,11 @@ namespace sgm
       {
         for(int col=0;col<width_;++col)
         {
-          if(inv_confidence_[row][col] > 0 && inv_confidence_[row][col] < conf_thresh_)
+          if(inv_confidence_[row][col] <= 0 || inv_confidence_[row][col] >= conf_thresh_)
           {
-            int i = (row * width_) + col;
-            disp_.at<uchar>(row, col) = disparity_SGM[i]*255.0/disparity_range_;
+            //int i = (row * width_) + col;
+            //disp_.at<uchar>(row, col) = disparity_SGM[i]*255.0/disparity_range_;
+            disp_.at<uchar>(row,col) = (mono_.at<uchar>(row,col)*h+k)*255.0/disparity_range_;
           }
         }
       }
