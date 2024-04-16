@@ -215,6 +215,8 @@ namespace sgm
     {
       //Please fill me!
 
+    //Used to save and compute the minimum value of the previous column of
+    //the path_cost table, used for the third equation of the system /green box formula
       vector<unsigned long> temp_values;
       for(int d = 0; d<disparity_range_;d++)
       {
@@ -224,13 +226,16 @@ namespace sgm
         best_prev_cost = *minimum;
         temp_values.clear();
 
-      // Assign the E_data term taken from the cost volume plus the E_smooth term
+      
       for(int d = 0;d<disparity_range_;d++)
       {
         //E_data
         unsigned long E_data = cost_[cur_y][cur_x][d];
 
+        //Variables for the values to be considered in the smooth term calculation
         unsigned long valueR,value1B,value2B,valueG;
+
+        //Vector used to store the element to get the min
         vector<unsigned long>smooth_values;
 
         //Red formula
@@ -256,16 +261,8 @@ namespace sgm
         }
         
         //Green formula
-        //se lo metto fuori diventa più efficiente
-        /* vector<unsigned long> temp_values;
-        for(int dt = 0; dt<disparity_range_;dt++)
-        {
-          temp_values.push_back(path_cost_[cur_path][cur_y-1][cur_x-1][dt]);
-        }
-          auto minimum = std::min_element(temp_values.begin(),temp_values.end());
-          best_prev_cost = *minimum; */
-          valueG = best_prev_cost + big_penalty_cost;
-          smooth_values.push_back(valueG);
+        valueG = best_prev_cost + big_penalty_cost;
+        smooth_values.push_back(valueG);
         
 
         //E_smooth
@@ -273,12 +270,13 @@ namespace sgm
         unsigned long E_smooth = *minimum_smooth;
 
 
-        //The final value is the the sum of the E terms - min E
+        //The final value is data term + smooth term - min 
         unsigned long single_path_cost = E_data + E_smooth - best_prev_cost;
         
         path_cost_[cur_path][cur_y][cur_x][d] = single_path_cost;
 
-        //in teoria non serve visto che la definisco ad ogni ciclo
+        //Vectors are instantiated each cycle, but to be on the safe side,
+        //i delete the elements present in the previous itaeration
         temp_values.clear();
         smooth_values.clear();
       }
@@ -305,20 +303,6 @@ namespace sgm
       
       int start_x, start_y, end_x, end_y, step_x, step_y;
 
-      /*
-      All possible directions 
-      E: east
-      W: west
-      S: south
-      N: north
-      SE: southeast
-      SW: southwest
-      NE: northeast
-      NW: northwest
-      */
-
-//change the north etc
-
      if(dir_x == -1)
      {
       start_x = pw_.east;
@@ -344,101 +328,6 @@ namespace sgm
       end_y = pw_.south;
       step_y = 1;
      }
-
-
-
-/*
-      //Horizontal E-W
-      if(dir_x == -1 && dir_y == 0)
-      {
-        start_x = width_ - 1;
-        end_x = 0; 
-        step_x = -1;
-
-        start_y = 0;
-        end_y = height_ - 1;
-        step_y = 1;
-      }
-
-      //Horizontal W-E
-      else if(dir_x == 1 && dir_y == 0)
-      {
-        start_x = 0;
-        end_x = width_ - 1;
-        step_x = 1;
-
-        start_y = 0;
-        end_y = height_ - 1;
-        step_y = 1;
-
-      }
-      //Vertical N-S
-      else if(dir_x == 0 && dir_y == 1)
-      {
-        start_y = 0;
-        end_y = height_ - 1;
-        step_y = 1;
-
-        start_x = 0;
-        end_x = width_ - 1;
-        step_x = 1;
-
-        
-      }
-      //Vertical S-N
-      else if(dir_x == 0 && dir_y == -1)
-      {
-        start_y = height_ - 1;
-        end_y = 0;
-        step_y = -1;
-
-        start_x = 0;
-        end_x = width_ -1;
-        step_x = 1;
-
-        
-      }
-      //Diagonal NW-SE
-      else if(dir_x == 1 && dir_y == 1)
-      {
-        start_x = 0;
-        start_y = 0;
-        end_x = width_ - 1;
-        end_y = height_ - 1;
-        step_x = 1;
-        step_y = 1;
-      }
-      //Diagonal SE-NW
-      else if(dir_x == -1 && dir_y == -1)
-      {
-        start_x = width_ - 1;
-        start_y = height_ - 1;
-        end_x = 0;
-        end_y = 0;
-        step_x = -1;
-        step_y = -1;
-      }
-      //Diagonal NE-SW
-      else if(dir_x == 1 && dir_y == -1)
-      {
-        start_x = width_ -1;
-        start_y = 0;
-        end_x = 0;
-        end_y = height_ -1;
-        step_x = -1;
-        step_y = 1;
-      }
-      //Diagonal SW-NE
-      else if(dir_x == -1 && dir_y == 1)
-      {
-        start_x = 0;
-        start_y = height_ - 1;
-        end_x = width_ - 1;
-        end_y = 0;
-        step_x = 1;
-        step_y = -1;
-      }
-      */
 
       //remove the comment code
 
@@ -489,7 +378,7 @@ namespace sgm
       vector<double>disparity_SGM;
       vector<double>disparity_mono;
 
-      cout<<"\nCompute disparity"<<endl;
+      //cout<<"\nCompute disparity"<<endl;
 
 
       calculate_cost_hamming();
@@ -548,6 +437,7 @@ namespace sgm
 
       int sizeMONO = disparity_mono.size();
       int sizeSGM= disparity_SGM.size();
+      //NB: they have the same size
 
       //Definition and inizialization of A and b
       MatrixXd A(sizeMONO,2);
@@ -558,8 +448,6 @@ namespace sgm
         A(i,0)=disparity_mono[i];
         A(i,1) =1;
       }
-      
-      //A.col(1).setOnes();
 
       for(int i=0;i<sizeSGM;++i)
       {
@@ -568,19 +456,11 @@ namespace sgm
       
       //Computation of the vector x
       Vector2d x = ((A.transpose() * A).inverse()) * A.transpose() * b;
-     // Matrix<float,2,1> X(2,1);
       
       //Extraction of h and k
       h = x(0);
       k = x(1);
-     // X = ((A.transpose() * A).inverse()) * A.transpose() * b;
-
-      //Scale the initial guess disparity
-      //for(int i=0;i<sizeSGM;++i)
-      //{
-       // disparity_SGM[i] = h * disparity_mono[i] + k;
-     // }
-
+     
       //Improving/replacing the low confidence SGM disparities
       //Most of the code is equal to the first part of this function
       for(int row=0;row<height_;++row)
@@ -589,9 +469,7 @@ namespace sgm
         {
           if(inv_confidence_[row][col] <= 0 || inv_confidence_[row][col] >= conf_thresh_)
           {
-            //int i = (row * width_) + col;
-            //disp_.at<uchar>(row, col) = disparity_SGM[i]*255.0/disparity_range_;
-            disp_.at<uchar>(row,col) = (mono_.at<uchar>(row,col)*h+k)*255.0/disparity_range_;
+            disp_.at<uchar>(row,col) = (mono_.at<uchar>(row,col) * h + k)*255.0/disparity_range_;
           }
         }
       }
