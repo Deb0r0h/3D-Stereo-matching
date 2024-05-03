@@ -1,5 +1,11 @@
 SGM-Census with mono-depth initial guess
 ========================================
+In this assignment, we will have to develop the code of a basic implementation of the Semi-Global
+Block Matching (SGM) stereo matching algorithm. Furthermore, in addition to the pair of input
+stereo images an initial guess of the disparity map is provided. This initial guess is generally very
+accurate but defined up to a scalar factor. After computing the disparity map with SGM, we can
+compute the scalar factor present in the initial guess and use the scaled initial guess disparity map
+to refine/complete the disparity map computed with SGM.
 
 ---
 ## Instructions
