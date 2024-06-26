@@ -8,9 +8,9 @@ compute the scalar factor present in the initial guess and use the scaled initia
 to refine/complete the disparity map computed with SGM.
 
 <p float="left">
-  <img src="media_readme/right.png" width="100" />
-  <img src="media_readme/left.png" width="100" /> 
-  <img src="media_readme/output.png" width="100" />
+  <img src="media_readme/right.png" width="300" />
+  <img src="media_readme/left.png" width="300" /> 
+  <img src="media_readme/output.png" width="300" />
 </p>
 
 
