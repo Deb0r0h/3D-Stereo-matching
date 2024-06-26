@@ -7,7 +7,12 @@ accurate but defined up to a scalar factor. After computing the disparity map wi
 compute the scalar factor present in the initial guess and use the scaled initial guess disparity map
 to refine/complete the disparity map computed with SGM.
 
-![Right](media_readme/right.png) ![Left](media_readme/left.png) ![Output](media_readme/output.png)
+<p float="left">
+  <img src="media_readme/right.png" width="100" />
+  <img src="media_readme/left.png" width="100" /> 
+  <img src="media_readme/output.png" width="100" />
+</p>
+
 
 
 ---
